@@ -306,6 +306,24 @@ class TestParkedDomain:
             is False
         )
 
+    def test_parked_lander_redirect_is_detected(self) -> None:
+        """Парковщик без URL-редиректа: 200 + `<title>` отсутствует + скрипт
+        уводит на `/lander`.
+
+        Реальный случай 2026-10-06: `bountybook.ai`, `moltter.com`,
+        `workprotocol.xyz`, `aicq.org`, `rentahuman.com`, `moltbook.com`
+        отдавали ровно это. Тело — 56 байт JS-заглушка, а на самой странице
+        `/lander` лежит `window.LANDER_SYSTEM="PW"` и `ap:"parking"`.
+        Без этого признака гейт засчитывал мёртвые домены как живые.
+        """
+        from verity_gate import is_parked
+
+        stub = 'window.onload=function(){window.location.href="/lander"}'
+        assert is_parked("https://bountybook.ai/", None, len(stub), stub) is True
+
+        lander = 'window.LANDER_SYSTEM="PW" window._trfd.push({ap:"parking"})'
+        assert is_parked("https://bountybook.ai/lander", None, len(lander), lander) is True
+
     def test_parked_200_is_not_passed(self) -> None:
         """200 от парковщика не должен доходить до PASSED_TECHNICAL."""
         assert (
