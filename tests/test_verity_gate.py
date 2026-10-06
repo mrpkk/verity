@@ -16,7 +16,14 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# `verity_gate.py` живёт рядом с этим репозиторием (в каталоге `sales/`), а не
+# внутри `verity/`. Раньше тест подставлял только `verity/`, из-за чего после
+# переноса на диск ŚRUTI модуль не импортировался и сборка падала. Ищем
+# каталог, где файл действительно лежит, — устойчиво к обоим вариантам.
+_HERE = Path(__file__).resolve().parent.parent
+for _candidate in (_HERE, _HERE.parent):
+    if (_candidate / "verity_gate.py").is_file() and str(_candidate) not in sys.path:
+        sys.path.insert(0, str(_candidate))
 
 import verity_gate  # noqa: E402
 
