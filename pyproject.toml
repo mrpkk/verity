@@ -1,0 +1,36 @@
+[project]
+name = "verity"
+version = "0.1.0"
+description = "Реестр проверенных агентных площадок дистрибуции: живые HTTP-пробы и вердикт по каждому маршруту"
+requires-python = ">=3.11"
+dependencies = []
+license = { text = "Apache-2.0" }
+keywords = ["ai-agents", "verification", "distribution", "provenance"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+]
+
+[project.scripts]
+verity-gate = "verity_gate:main"
+
+
+[project.urls]
+Homepage = "https://github.com/mrpkk/verity"
+Repository = "https://github.com/mrpkk/verity"
+Issues = "https://github.com/mrpkk/verity/issues"
+Sponsor = "https://github.com/sponsors/mrpkk"
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["verity_gate"]
