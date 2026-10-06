@@ -43,6 +43,43 @@ from verity_gate import (  # noqa: E402
 CANON = Path("/home/iamthat/Документы/work/projectBooks/tmpSPEC/roadmapV4.md")
 
 
+class TestGateIsVersionControlled:
+    """Движок гейта обязан лежать внутри репозитория.
+
+    До 06.10.2026 `verity_gate.py` жил уровнем выше в `sales/` и не был
+    под контролем версий нигде: в `mrpkk/verity` на GitHub не было кода,
+    который выдаёт вердикты, а тесты импортировали модуль, выбирая путь
+    наугад. Репозиторий с Apache-2.0 без исходников гейта неполон, а
+    расхождение копий даёт два разных реестра из одного канона.
+    """
+
+    def test_module_file_lives_inside_this_repository(self) -> None:
+        repo_root = Path(__file__).resolve().parent.parent
+        module_path = Path(verity_gate.__file__).resolve()
+        assert module_path.parent == repo_root, (
+            f"verity_gate.py находится вне репозитория: {module_path}. "
+            f"Ожидалось: {repo_root / 'verity_gate.py'}"
+        )
+
+    def test_no_stale_copy_of_the_gate_outside_the_repository(self) -> None:
+        """Рядом не должно остаться молчаливого дубля движка.
+
+        Допустим только симлинк на файл внутри репозитория — он перенаправляет,
+        а не расходится с ним.
+        """
+        repo_root = Path(__file__).resolve().parent.parent
+        neighbour = repo_root.parent / "verity_gate.py"
+        if not neighbour.exists():
+            return
+        assert neighbour.is_symlink(), (
+            f"{neighbour} — обычный файл, а не симлинк: это дубль движка, "
+            "вердикты могут разойтись с опубликованными"
+        )
+        assert neighbour.resolve() == (repo_root / "verity_gate.py").resolve(), (
+            f"{neighbour} указывает не на {repo_root / 'verity_gate.py'}"
+        )
+
+
 class TestCanonParsing:
     def test_platforms_are_read_from_canon_not_hand_copied(self) -> None:
         """Список обязан идти из спецификации, иначе реестр разойдётся с ней."""
