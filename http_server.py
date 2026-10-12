@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import verity_gate as vg  # noqa: E402
 
-LANDING = """<!doctype html><meta charset=utf-8><title>verity — проверка площадки</title>
+LANDING = """<!doctype html><meta charset=utf-8><title>verity — platform due diligence</title>
 <style>
  body{background:#0b0d12;color:#e8ecf4;font:16px/1.6 system-ui,sans-serif;
       max-width:760px;margin:60px auto;padding:0 24px}
@@ -85,7 +85,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(404, {"error": "not found", "path": path})
         url = (q.get("url") or [""])[0].strip()
         if not url:
-            return self._send(400, {"error": "передай ?url=..."})
+            return self._send(400, {"error": "supply ?url=..."})
         if not url.startswith(("http://", "https://")):
             url = "https://" + url
         try:

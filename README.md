@@ -1,81 +1,55 @@
 # verity
 
-Реестр проверенных агентных площадок дистрибуции. Каждая запись проверена живым
-HTTP-запросом и снабжена доказательством.
+A registry of verified agent distribution platforms. Every entry is checked
+with a live HTTP request and carries its evidence.
 
+## The problem it solves
 
+Distribution channels for agents are claimed to be working without evidence.
+Nobody can tell which channel is alive and which is not — and nobody answers
+the question when it matters.
 
-## Что это и какую проблему решает
+`verity` is a registry of checked platforms: every route is verified with a
+live HTTP request, and each one carries a verdict plus the evidence behind it.
 
-Каналы дистрибуции для агентов заявляют работающими без доказательств.
-Непонятно, какой канал жив, а какой нет — и не отвечает никто.
-`verity` — реестр проверенных площадок: каждый маршрут проверен живым
-HTTP-запросом, к каждому приложен вердикт и доказательство.
+## Three verdicts, not two
 
-## Как запустить
+Most checks collapse to "works" or "does not". That hides the case that
+matters most: a domain that responds, but is the corporate root — with the
+actual marketplace buried at a path nobody linked to.
 
-```bash
-python3 verity_gate.py --list-only   # 77 маршрутов без сети
-python3 verity_gate.py                    # живые HTTP-пробы + register.json
-```
-
-## Как использовать агентом
-
-Агент читает register.json и берёт маршруты с техническим вердиктом pass,
-а не из чужого списка. Перед публикацией проверяет маршрут заново.
-
-## Что НЕ готово (честно)
-
-- Счёт подтверждённых каналов: 0 из 3. Техническая ось жива (77/77),
-  но ни один канал ещё не подтверждён владельцем вручную.
-- Часть маршрутов требует KYC/логина — автоматическая проверка их не берёт.
-- Приватные каналы (TG/VK) гейт не проверяет: только публичные HTTP.
-
-## Что внутри
-
-| Файл | Назначение |
+| Verdict | Meaning |
 |---|---|
-| [`verity_gate.py`](verity_gate.py) | сам гейт: HTTP-пробы всех площадок части IX, вердикт по каждой, `register.json` на выходе |
-| [`register.json`](register.json) | реестр проверок: 77 маршрутов, технический и ручной вердикт каждого |
-| [`docs/CHANNELS.md`](docs/CHANNELS.md) | канал первого дня: 8-колоночная таблица подтверждённых маршрутов, счёт `0 из 3`, статус долга D-1 |
-| [`tests/test_verity_gate.py`](tests/test_verity_gate.py) | 56 тестов логики вердиктов (сеть не используется) |
+| `PASSED_TECHNICAL` | the site responds |
+| `NEEDS_PATH` | the domain answers but is a corporate root; the platform is at a path |
+| `DEAD` | no response, or a parked domain |
 
-## Запуск
+## What a pass does not mean
 
-```bash
-# проверить все площадки части IX и перезаписать реестр
-python3 verity_gate.py
+`PASSED_TECHNICAL` is not `VERIFIED`.
 
-# только показать список площадок и найденные домены, ничего не перезаписывая
-python3 verity_gate.py --list-only
+It says the site responds. Fees, terms and whether the operator is honest are
+untouched by an HTTP request. A green result here must never be reported as an
+endorsement, and the API returns that caveat alongside every verdict.
 
-# тесты
-python3 -m pytest tests/ -q
+## Try it
+
+```
+curl 'https://rta.lat/verity/check?url=https://example.com'
 ```
 
-Требуется только стандартная библиотека Python. Гейт делает один read-only GET
-на страницу площадки — то же, что человек, открывший ссылку. Никаких
-регистраций, листингов и публикаций.
+The response also includes the resolved URL, the page title, the body size and
+whatever technologies were detected.
 
----
-<!-- SPONSOR-BLOCK -->
----
+## Honesty about the signal
 
-## 🤝 На сок
+Agent-ness is heuristic, not exact. We do not know which addresses belong to
+agents; we measure the payment profile and compare it against a baseline. No
+causal claims are made.
 
-Этот проект — open-source. Если он оказался полезен, поддержать можно криптой
-(USDC, сеть **Base**) — без карты и без регистрации, как и сам проект рассчитывается:
+## Public repo
 
-| Сеть | Кошелёк | Ручной перевод (BaseScan) |
-|---|---|---|
-| Base (USDC) | `0xc1a411f2cb5e31c2baa6f184e627715925104318` | [открыть](https://basescan.org/address/0xc1a411f2cb5e31c2baa6f184e627715925104318) |
+<https://github.com/mrpkk/verity>
 
-**Проще:** кнопка спонсорства GitHub — [Sponsor](https://github.com/sponsors/mrpkk)
-
-Open Collective / Patreon — по желанию, привязывается позже.
-
----
-
-*Проект открыт. Код можно читать, проверять, форкать и использовать.
-Спонсор не даёт никаких прав на код — код уже свободен по лицензии Apache-2.0.*
-<!-- /SPONSOR-BLOCK -->
+Part of the Indra set — six small services for agents that have to be
+trusted: <https://indra.rta.lat>
