@@ -54,6 +54,36 @@ here must never be reported as an endorsement.</div>
 """
 
 
+def _base_url() -> str:
+    """Публичный адрес: в sitemap обязаны быть абсолютные URL."""
+    import os
+    return os.environ.get("VERITY_BASE_URL", "https://rta.lat/verity").rstrip("/")
+
+
+def _robots() -> str:
+    """Краулеров пускаем: индексация витрины — это трафик."""
+    return ("User-agent: *\n"
+            "Allow: /\n"
+            "Disallow: /mcp\n"
+            f"Sitemap: {_base_url()}/sitemap.xml\n")
+
+
+def _sitemap() -> str:
+    """Карта сайта: документы, а не endpoints.
+
+    `/subscribe`, `/quote`, `/check` сюда не идут — их индексация
+    бессмысленна, это машиночитаемые адреса.
+    """
+    base = _base_url()
+    urls = "".join(
+        f"<url><loc>{base}{page}</loc></url>"
+        for page in ('/', '/health')
+    )
+    return ('<?xml version="1.0" encoding="UTF-8"?>'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+            f"{urls}</urlset>")
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "verity"
 
@@ -77,6 +107,10 @@ class Handler(BaseHTTPRequestHandler):
         path = u.path.rstrip("/") or "/"
         if path.startswith("/verity"):
             path = path[len("/verity"):] or "/"
+        if path == "/robots.txt":
+            self._send(200, _robots())
+        elif path == "/sitemap.xml":
+            self._send(200, _sitemap())
         if path == "/":
             return self._send(200, LANDING)
         if path == "/health":
