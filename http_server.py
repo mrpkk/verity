@@ -84,6 +84,43 @@ def _sitemap() -> str:
             f"{urls}</urlset>")
 
 
+
+def _schema_block() -> str:
+    """Разметка товара для поиска: тип, имя, цена, где найти."""
+    data = {
+    "@type": "SoftwareApplication",
+    "name": "verity",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Any",
+    "description": "Technical verification of a URL: status, final URL, TLS, content and detected technology. Distinguishes a dead resource from a wrong path.",
+    "url": "https://rta.lat/verity/",
+    "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+    }
+}
+    data["@context"] = "https://schema.org"
+    return ('<script type="application/ld+json">'
+            + json.dumps(data, ensure_ascii=False) + "</script>")
+
+
+def _with_schema(html: str) -> str:
+    """Вставить разметку в HTML. Идемпотентно: повторный вызов не дублирует."""
+    if not isinstance(html, str) or "application/ld+json" in html:
+        return html
+    block = _schema_block()
+    lowered = html.lower()
+    for marker in ("</head>", "<body", "</title>"):
+        pos = lowered.find(marker)
+        if pos != -1:
+            return html[:pos] + block + html[pos:]
+    import re
+    m = re.search(r"<meta[^>]+charset[^>]*>", html, re.IGNORECASE)
+    if m:
+        return html[:m.end()] + block + html[m.end():]
+    return block + html
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "verity"
 
@@ -112,7 +149,7 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/sitemap.xml":
             self._send(200, _sitemap())
         if path == "/":
-            return self._send(200, LANDING)
+            return self._send(200, _with_schema(LANDING))
         if path == "/health":
             return self._send(200, {"status": "ok", "service": "verity"})
         if path != "/check":
